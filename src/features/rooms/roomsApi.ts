@@ -1,24 +1,27 @@
 import { api } from '@/app/api';
-import type { 
-  Room, 
-  RoomFormData, 
-  RoomFilters, 
-  RoomStatus 
+import type {
+  Room,
+  RoomFormData,
+  RoomFilters,
+  RoomStatus
 } from '@/types/room';
 import { mockRooms } from '@/utils/mockData';
 import { simulateApiDelay } from '@/utils/helpers';
 
-// Mock implementation - in production, this would hit real API endpoints
+// In-memory store — starts empty, populated via createRoom mutations
 let rooms = [...mockRooms];
+
+// Getter for other modules (e.g. dashboardApi) to read live data
+export const getRoomsData = () => rooms;
 
 export const roomsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getRooms: builder.query<Room[], RoomFilters | void>({
       queryFn: async (filters) => {
         await simulateApiDelay(300);
-        
+
         let filteredRooms = [...rooms];
-        
+
         if (filters) {
           if (filters.status) {
             filteredRooms = filteredRooms.filter(r => r.status === filters.status);
@@ -31,7 +34,7 @@ export const roomsApi = api.injectEndpoints({
           }
           if (filters.search) {
             const search = filters.search.toLowerCase();
-            filteredRooms = filteredRooms.filter(r => 
+            filteredRooms = filteredRooms.filter(r =>
               r.roomNumber.toLowerCase().includes(search) ||
               r.type.toLowerCase().includes(search)
             );
@@ -43,12 +46,12 @@ export const roomsApi = api.injectEndpoints({
             filteredRooms = filteredRooms.filter(r => r.pricePerNight <= filters.maxPrice!);
           }
         }
-        
+
         return { data: filteredRooms };
       },
       providesTags: ['Room'],
     }),
-    
+
     getRoomById: builder.query<Room, string>({
       queryFn: async (id) => {
         await simulateApiDelay(200);
@@ -60,7 +63,7 @@ export const roomsApi = api.injectEndpoints({
       },
       providesTags: (_result, _error, id) => [{ type: 'Room', id }],
     }),
-    
+
     createRoom: builder.mutation<Room, RoomFormData>({
       queryFn: async (data) => {
         await simulateApiDelay(500);
@@ -74,7 +77,7 @@ export const roomsApi = api.injectEndpoints({
       },
       invalidatesTags: ['Room', 'Dashboard'],
     }),
-    
+
     updateRoom: builder.mutation<Room, { id: string; data: Partial<RoomFormData> }>({
       queryFn: async ({ id, data }) => {
         await simulateApiDelay(500);
@@ -87,7 +90,7 @@ export const roomsApi = api.injectEndpoints({
       },
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Room', id }, 'Dashboard'],
     }),
-    
+
     updateRoomStatus: builder.mutation<Room, { id: string; status: RoomStatus }>({
       queryFn: async ({ id, status }) => {
         await simulateApiDelay(300);
@@ -100,7 +103,7 @@ export const roomsApi = api.injectEndpoints({
       },
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Room', id }, 'Dashboard'],
     }),
-    
+
     deleteRoom: builder.mutation<void, string>({
       queryFn: async (id) => {
         await simulateApiDelay(500);

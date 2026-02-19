@@ -31,14 +31,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockStaff, mockActivityLogs } from '@/utils/mockData';
+import type { Staff as StaffType, ActivityLog } from '@/types/staff';
 import { formatDateTime, getInitials } from '@/utils/helpers';
 import { useAppSelector } from '@/hooks/useAppStore';
 
 const Staff = () => {
   const [search, setSearch] = useState('');
+  const [staffList] = useState<StaffType[]>([]);
+  const [activityLogs] = useState<ActivityLog[]>([]);
   const { user } = useAppSelector((state) => state.auth);
-  
+
   // Only admins can access this page
   if (user?.role !== 'admin') {
     return (
@@ -52,7 +54,7 @@ const Staff = () => {
     );
   }
 
-  const filteredStaff = mockStaff.filter((staff) => {
+  const filteredStaff = staffList.filter((staff) => {
     if (search) {
       const searchLower = search.toLowerCase();
       return (
@@ -66,20 +68,16 @@ const Staff = () => {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'admin':
-        return 'default';
-      case 'manager':
-        return 'info';
-      case 'receptionist':
-        return 'secondary';
-      default:
-        return 'secondary';
+      case 'admin': return 'default';
+      case 'manager': return 'info';
+      case 'receptionist': return 'secondary';
+      default: return 'secondary';
     }
   };
 
-  const logsWithStaff = mockActivityLogs.map((log) => ({
+  const logsWithStaff = activityLogs.map((log) => ({
     ...log,
-    staff: mockStaff.find((s) => s.id === log.staffId),
+    staff: staffList.find((s) => s.id === log.staffId),
   }));
 
   return (
@@ -106,7 +104,7 @@ const Staff = () => {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold">{mockStaff.length}</p>
+              <p className="text-2xl font-bold">{staffList.length}</p>
               <p className="text-sm text-muted-foreground">Total Staff</p>
             </div>
           </CardContent>
@@ -118,7 +116,7 @@ const Staff = () => {
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {mockStaff.filter((s) => s.isActive).length}
+                {staffList.filter((s) => s.isActive).length}
               </p>
               <p className="text-sm text-muted-foreground">Active</p>
             </div>
@@ -131,7 +129,7 @@ const Staff = () => {
             </div>
             <div>
               <p className="text-2xl font-bold">
-                {mockStaff.filter((s) => s.role === 'admin').length}
+                {staffList.filter((s) => s.role === 'admin').length}
               </p>
               <p className="text-sm text-muted-foreground">Administrators</p>
             </div>

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   CreditCard,
   DollarSign,
@@ -27,31 +28,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { mockPayments, mockInvoices, mockGuests, mockBookings } from '@/utils/mockData';
+import type { Payment, Invoice } from '@/types/payment';
 import { formatCurrency, formatDateTime, getPaymentStatusLabel } from '@/utils/helpers';
 import KpiCard from '@/components/common/KpiCard';
 
 const Payments = () => {
-  const totalRevenue = mockPayments
+  const [payments] = useState<Payment[]>([]);
+  const [invoices] = useState<Invoice[]>([]);
+
+  const totalRevenue = payments
     .filter((p) => p.status === 'completed')
     .reduce((sum, p) => sum + p.amount, 0);
-  
-  const pendingPayments = mockBookings
-    .filter((b) => b.paymentStatus === 'pending' || b.paymentStatus === 'partial')
-    .reduce((sum, b) => sum + (b.totalAmount - b.paidAmount), 0);
 
-  const paymentsWithDetails = mockPayments.map((payment) => ({
-    ...payment,
-    guest: mockGuests.find((g) => g.id === payment.guestId),
-    booking: mockBookings.find((b) => b.id === payment.bookingId),
-  }));
+  const pendingAmount = payments
+    .filter((p) => p.status === 'pending')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const completedCount = payments.filter((p) => p.status === 'completed').length;
+  const avgTransaction = completedCount > 0 ? totalRevenue / completedCount : 0;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Payments & Billing</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Payments &amp; Billing</h1>
           <p className="text-muted-foreground">
             Manage payments, invoices, and transactions
           </p>
@@ -79,24 +80,23 @@ const Payments = () => {
         />
         <KpiCard
           title="Pending Payments"
-          value={formatCurrency(pendingPayments)}
-          subtitle={`${mockBookings.filter((b) => b.paymentStatus !== 'paid').length} bookings`}
+          value={formatCurrency(pendingAmount)}
+          subtitle={`${payments.filter((p) => p.status === 'pending').length} transactions`}
           icon={Clock}
           iconColor="text-status-cleaning"
         />
         <KpiCard
           title="Transactions"
-          value={mockPayments.length}
+          value={payments.length}
           subtitle="Total transactions"
           icon={CreditCard}
           iconColor="text-accent"
         />
         <KpiCard
           title="Avg. Transaction"
-          value={formatCurrency(totalRevenue / mockPayments.filter((p) => p.status === 'completed').length || 0)}
+          value={formatCurrency(avgTransaction)}
           subtitle="Per completed payment"
           icon={TrendingUp}
-          trend={{ value: 8, isPositive: true }}
           iconColor="text-status-maintenance"
         />
       </div>
@@ -139,60 +139,64 @@ const Payments = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Transaction ID</TableHead>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Date</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {paymentsWithDetails.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-mono text-sm">
-                      {payment.transactionId || `TXN-${payment.id}`}
-                    </TableCell>
-                    <TableCell>
-                      {payment.guest
-                        ? `${payment.guest.firstName} ${payment.guest.lastName}`
-                        : 'Unknown Guest'}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(payment.amount)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="capitalize">
-                        {payment.method}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="capitalize">{payment.type}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          payment.status === 'completed'
-                            ? 'success'
-                            : payment.status === 'pending'
-                            ? 'warning'
-                            : 'error'
-                        }
-                      >
-                        {getPaymentStatusLabel(payment.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDateTime(payment.createdAt)}
-                    </TableCell>
+          {payments.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <CreditCard className="h-10 w-10 mb-3 opacity-30" />
+              <p className="font-medium">No payments recorded yet</p>
+              <p className="text-sm mt-1">Payments will appear here when bookings are made</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Transaction ID</TableHead>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Method</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Date</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {payments.map((payment) => (
+                    <TableRow key={payment.id}>
+                      <TableCell className="font-mono text-sm">
+                        {payment.transactionId || `TXN-${payment.id}`}
+                      </TableCell>
+                      <TableCell>{payment.guestId}</TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(payment.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="capitalize">
+                          {payment.method}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="capitalize">{payment.type}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            payment.status === 'completed'
+                              ? 'success'
+                              : payment.status === 'pending'
+                                ? 'warning'
+                                : 'error'
+                          }
+                        >
+                          {getPaymentStatusLabel(payment.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {formatDateTime(payment.createdAt)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -202,32 +206,33 @@ const Payments = () => {
           <CardTitle>Recent Invoices</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead className="w-[100px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockInvoices.map((invoice) => {
-                  const guest = mockGuests.find((g) => g.id === invoice.guestId);
-                  return (
+          {invoices.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+              <FileText className="h-10 w-10 mb-3 opacity-30" />
+              <p className="font-medium">No invoices yet</p>
+              <p className="text-sm mt-1">Invoices will appear here once created</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Invoice #</TableHead>
+                    <TableHead>Guest</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Due Date</TableHead>
+                    <TableHead className="w-[100px]"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoices.map((invoice) => (
                     <TableRow key={invoice.id}>
                       <TableCell className="font-mono">
                         {invoice.invoiceNumber}
                       </TableCell>
-                      <TableCell>
-                        {guest
-                          ? `${guest.firstName} ${guest.lastName}`
-                          : 'Unknown Guest'}
-                      </TableCell>
+                      <TableCell>{invoice.guestId}</TableCell>
                       <TableCell>{invoice.items.length} items</TableCell>
                       <TableCell className="font-medium">
                         {formatCurrency(invoice.total)}
@@ -238,10 +243,10 @@ const Payments = () => {
                             invoice.status === 'paid'
                               ? 'success'
                               : invoice.status === 'sent'
-                              ? 'info'
-                              : invoice.status === 'overdue'
-                              ? 'error'
-                              : 'secondary'
+                                ? 'info'
+                                : invoice.status === 'overdue'
+                                  ? 'error'
+                                  : 'secondary'
                           }
                         >
                           {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
@@ -257,11 +262,11 @@ const Payments = () => {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

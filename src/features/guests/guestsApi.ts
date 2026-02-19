@@ -5,18 +5,21 @@ import { simulateApiDelay } from '@/utils/helpers';
 
 let guests = [...mockGuests];
 
+// Getter for other modules to read live guest data
+export const getGuestsData = () => guests;
+
 export const guestsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getGuests: builder.query<Guest[], GuestFilters | void>({
       queryFn: async (filters) => {
         await simulateApiDelay(300);
-        
+
         let filteredGuests = [...guests];
-        
+
         if (filters) {
           if (filters.search) {
             const search = filters.search.toLowerCase();
-            filteredGuests = filteredGuests.filter(g => 
+            filteredGuests = filteredGuests.filter(g =>
               g.firstName.toLowerCase().includes(search) ||
               g.lastName.toLowerCase().includes(search) ||
               g.email.toLowerCase().includes(search) ||
@@ -30,12 +33,12 @@ export const guestsApi = api.injectEndpoints({
             filteredGuests = filteredGuests.filter(g => g.country === filters.country);
           }
         }
-        
+
         return { data: filteredGuests };
       },
       providesTags: ['Guest'],
     }),
-    
+
     getGuestById: builder.query<Guest, string>({
       queryFn: async (id) => {
         await simulateApiDelay(200);
@@ -47,7 +50,7 @@ export const guestsApi = api.injectEndpoints({
       },
       providesTags: (_result, _error, id) => [{ type: 'Guest', id }],
     }),
-    
+
     createGuest: builder.mutation<Guest, GuestFormData>({
       queryFn: async (data) => {
         await simulateApiDelay(500);
@@ -64,7 +67,7 @@ export const guestsApi = api.injectEndpoints({
       },
       invalidatesTags: ['Guest'],
     }),
-    
+
     updateGuest: builder.mutation<Guest, { id: string; data: Partial<GuestFormData> }>({
       queryFn: async ({ id, data }) => {
         await simulateApiDelay(500);
@@ -72,8 +75,8 @@ export const guestsApi = api.injectEndpoints({
         if (index === -1) {
           return { error: { status: 404, data: 'Guest not found' } };
         }
-        guests[index] = { 
-          ...guests[index], 
+        guests[index] = {
+          ...guests[index],
           ...data,
           updatedAt: new Date().toISOString(),
         };
@@ -81,7 +84,7 @@ export const guestsApi = api.injectEndpoints({
       },
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Guest', id }],
     }),
-    
+
     deleteGuest: builder.mutation<void, string>({
       queryFn: async (id) => {
         await simulateApiDelay(500);
