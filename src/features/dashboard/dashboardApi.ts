@@ -1,7 +1,7 @@
 import { api } from '@/app/api';
 import type { DashboardStats, OccupancyData, RevenueData } from '@/types/dashboard';
 import { getRoomsData } from '@/features/rooms/roomsApi';
-import { getBookingsData } from '@/features/bookings/bookingsApi';
+import { getBookingsData, getPaymentsData } from '@/features/bookings/bookingsApi';
 import { simulateApiDelay } from '@/utils/helpers';
 
 export const dashboardApi = api.injectEndpoints({
@@ -32,22 +32,20 @@ export const dashboardApi = api.injectEndpoints({
           b => b.paymentStatus === 'pending' || b.paymentStatus === 'partial'
         ).length;
 
-        // Revenue from booking totals of completed/checked-in stays
-        const paidBookings = bookings.filter(
-          b => b.paymentStatus === 'paid' || b.paymentStatus === 'partial'
-        );
+        // Revenue from real payment records (created on check-in)
+        const livePayments = getPaymentsData().filter(p => p.status === 'completed');
+
+        const dailyRevenue = livePayments
+          .filter(p => p.createdAt.startsWith(today))
+          .reduce((sum, p) => sum + p.amount, 0);
 
         const monthStart = new Date();
         monthStart.setDate(1);
         const monthStartStr = monthStart.toISOString().split('T')[0];
 
-        const dailyRevenue = paidBookings
-          .filter(b => b.createdAt.startsWith(today))
-          .reduce((sum, b) => sum + b.paidAmount, 0);
-
-        const monthlyRevenue = paidBookings
-          .filter(b => b.createdAt >= monthStartStr)
-          .reduce((sum, b) => sum + b.paidAmount, 0);
+        const monthlyRevenue = livePayments
+          .filter(p => p.createdAt >= monthStartStr)
+          .reduce((sum, p) => sum + p.amount, 0);
 
         const occupancyRate = totalRooms > 0
           ? Math.round((occupiedRooms / totalRooms) * 100)

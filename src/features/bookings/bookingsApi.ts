@@ -7,14 +7,19 @@ import type {
 } from '@/types/booking';
 import { mockBookings } from '@/utils/mockData';
 import { simulateApiDelay, calculateNights } from '@/utils/helpers';
-import { getRoomsData } from '@/features/rooms/roomsApi';
+import { getRoomsData, updateRoomInPlace } from '@/features/rooms/roomsApi';
 import { getGuestsData } from '@/features/guests/guestsApi';
+import type { Payment } from '@/types/payment';
 
 // In-memory store
 let bookings = [...mockBookings];
 
-// Getter for dashboardApi to read live bookings
+// In-memory payments store — entries are created on check-in
+let payments: Payment[] = [];
+
+// Getters for dashboardApi / Payments page
 export const getBookingsData = () => bookings;
+export const getPaymentsData = () => payments;
 
 export const bookingsApi = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -170,15 +175,55 @@ export const bookingsApi = api.injectEndpoints({
         if (index === -1) {
           return { error: { status: 404, data: 'Booking not found' } };
         }
-        bookings[index] = {
-          ...bookings[index],
-          status,
-          updatedAt: new Date().toISOString(),
-        };
+
+        const booking = bookings[index];
+
+        if (status === 'checked-in') {
+          // Mark room as occupied
+          updateRoomInPlace(booking.roomId, { status: 'occupied', currentBookingId: booking.id });
+          // Mark payment as fully paid
+          bookings[index] = {
+            ...booking,
+            status,
+            paymentStatus: 'paid',
+            paidAmount: booking.totalAmount,
+            updatedAt: new Date().toISOString(),
+          };
+          // Record a payment entry for the Payments page
+          const payment: Payment = {
+            id: `pay-${Date.now()}`,
+            bookingId: booking.id,
+            guestId: booking.guestId,
+            amount: booking.totalAmount,
+            method: 'card',
+            type: 'booking',
+            status: 'completed',
+            transactionId: `TXN-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+            processedAt: new Date().toISOString(),
+          };
+          payments.push(payment);
+        } else if (status === 'checked-out') {
+          // Free the room for cleaning
+          updateRoomInPlace(booking.roomId, { status: 'cleaning', currentBookingId: undefined });
+          bookings[index] = {
+            ...booking,
+            status,
+            updatedAt: new Date().toISOString(),
+          };
+        } else {
+          bookings[index] = {
+            ...booking,
+            status,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+
         return { data: bookings[index] };
       },
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Booking', id }, 'Room', 'Dashboard'],
     }),
+
 
     cancelBooking: builder.mutation<Booking, string>({
       queryFn: async (id) => {
@@ -187,9 +232,12 @@ export const bookingsApi = api.injectEndpoints({
         if (index === -1) {
           return { error: { status: 404, data: 'Booking not found' } };
         }
+        // Free the room back to available
+        updateRoomInPlace(bookings[index].roomId, { status: 'available', currentBookingId: undefined });
         bookings[index] = {
           ...bookings[index],
           status: 'cancelled',
+          paymentStatus: 'pending',
           updatedAt: new Date().toISOString(),
         };
         return { data: bookings[index] };

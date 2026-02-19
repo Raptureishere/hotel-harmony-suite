@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAppDispatch } from '@/hooks/useAppStore';
 import { setCredentials, setLoading, setError } from '@/features/auth/authSlice';
-import { mockUsers } from '@/utils/mockData';
 import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
@@ -45,34 +44,49 @@ const Login = () => {
     setIsSubmitting(true);
     dispatch(setLoading(true));
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 800));
 
-    // Mock authentication - check if email matches any user
-    const user = mockUsers.find(
-      (u) => u.email.toLowerCase() === data.email.toLowerCase()
-    );
-
-    if (user && data.password === 'password') {
-      dispatch(
-        setCredentials({
-          user,
-          token: `mock-jwt-token-${user.id}-${Date.now()}`,
-        })
-      );
-      toast({
-        title: 'Welcome back!',
-        description: `Logged in as ${user.name}`,
-      });
-      navigate('/dashboard');
-    } else {
-      dispatch(setError('Invalid email or password'));
+    if (!data.email || !data.password) {
+      dispatch(setError('Please enter your email and password'));
       toast({
         title: 'Login failed',
-        description: 'Invalid email or password. Try: admin@grandhotel.com / password',
+        description: 'Email and password are required.',
         variant: 'destructive',
       });
+      setIsSubmitting(false);
+      dispatch(setLoading(false));
+      return;
     }
+
+    // Derive role from email for demo purposes (no backend)
+    const emailLower = data.email.toLowerCase();
+    const role = emailLower.includes('admin')
+      ? 'admin'
+      : emailLower.includes('manager')
+        ? 'manager'
+        : 'receptionist';
+
+    const name = data.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+    dispatch(
+      setCredentials({
+        user: {
+          id: `user-${Date.now()}`,
+          email: data.email,
+          name,
+          role,
+          createdAt: new Date().toISOString(),
+          lastLogin: new Date().toISOString(),
+          isActive: true,
+        },
+        token: `jwt-${Date.now()}`,
+      })
+    );
+    toast({
+      title: 'Welcome!',
+      description: `Logged in as ${name}`,
+    });
+    navigate('/dashboard');
 
     setIsSubmitting(false);
     dispatch(setLoading(false));
@@ -90,14 +104,14 @@ const Login = () => {
             </div>
             <span className="text-2xl font-bold">Grand Hotel</span>
           </div>
-          
+
           <div className="space-y-6">
             <h1 className="text-4xl font-bold leading-tight">
               Hotel Management<br />
               <span className="text-accent">Made Simple</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-md">
-              Streamline your operations with our comprehensive hotel management system. 
+              Streamline your operations with our comprehensive hotel management system.
               Manage bookings, rooms, guests, and staff all in one place.
             </p>
           </div>

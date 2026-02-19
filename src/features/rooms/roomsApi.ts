@@ -14,6 +14,12 @@ let rooms = [...mockRooms];
 // Getter for other modules (e.g. dashboardApi) to read live data
 export const getRoomsData = () => rooms;
 
+// Direct mutator for cross-module use (e.g. bookingsApi on check-in)
+export const updateRoomInPlace = (roomId: string, patch: Partial<Room>) => {
+  const idx = rooms.findIndex(r => r.id === roomId);
+  if (idx !== -1) rooms[idx] = { ...rooms[idx], ...patch };
+};
+
 export const roomsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getRooms: builder.query<Room[], RoomFilters | void>({
