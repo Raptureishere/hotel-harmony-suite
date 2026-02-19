@@ -45,15 +45,18 @@ import { useGetGuestsQuery, useDeleteGuestMutation } from '@/features/guests/gue
 import { formatCurrency, getInitials } from '@/utils/helpers';
 import { Guest } from '@/types/guest';
 import { useToast } from '@/hooks/use-toast';
+import { useAppSelector } from '@/hooks/useAppStore';
 
 const Guests = () => {
   const [search, setSearch] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState<Guest | null>(null);
-  
+
   const { data: guests = [], isLoading } = useGetGuestsQuery({ search: search || undefined });
   const [deleteGuest] = useDeleteGuestMutation();
   const { toast } = useToast();
+  const { user } = useAppSelector(state => state.auth);
+  const canDelete = user?.role === 'admin' || user?.role === 'manager';
 
   const handleDelete = async () => {
     if (!selectedGuest) return;
@@ -247,17 +250,21 @@ const Guests = () => {
                                 Edit
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => {
-                                setSelectedGuest(guest);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
+                            {canDelete && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => {
+                                    setSelectedGuest(guest);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Guest
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

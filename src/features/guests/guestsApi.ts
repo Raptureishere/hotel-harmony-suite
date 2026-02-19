@@ -2,6 +2,8 @@ import { api } from '@/app/api';
 import type { Guest, GuestFormData, GuestFilters } from '@/types/guest';
 import { mockGuests } from '@/utils/mockData';
 import { simulateApiDelay } from '@/utils/helpers';
+import { getBookingsData, getPaymentsData } from '@/features/bookings/bookingsApi';
+import { updateRoomInPlace } from '@/features/rooms/roomsApi';
 
 let guests = [...mockGuests];
 
@@ -88,10 +90,41 @@ export const guestsApi = api.injectEndpoints({
     deleteGuest: builder.mutation<void, string>({
       queryFn: async (id) => {
         await simulateApiDelay(500);
+
+        // 1. Find all bookings for this guest
+        const allBookings = getBookingsData();
+        const guestBookings = allBookings.filter(b => b.guestId === id);
+
+        // 2. Free rooms that were occupied or reserved by this guest
+        for (const booking of guestBookings) {
+          if (booking.status === 'checked-in') {
+            updateRoomInPlace(booking.roomId, { status: 'cleaning' });
+          } else if (booking.status === 'reserved') {
+            updateRoomInPlace(booking.roomId, { status: 'available' });
+          }
+        }
+
+        // 3. Remove payment records for this guest
+        const payments = getPaymentsData();
+        const bookingIds = new Set(guestBookings.map(b => b.id));
+        const idx = payments.findIndex(p => bookingIds.has(p.bookingId));
+        if (idx !== -1) payments.splice(idx, 1);
+        // Remove all payment records for guest's bookings in-place
+        for (let i = payments.length - 1; i >= 0; i--) {
+          if (bookingIds.has(payments[i].bookingId)) payments.splice(i, 1);
+        }
+
+        // 4. Remove the guest's bookings from the bookings array
+        const bookingsArr = getBookingsData();
+        for (let i = bookingsArr.length - 1; i >= 0; i--) {
+          if (bookingsArr[i].guestId === id) bookingsArr.splice(i, 1);
+        }
+
+        // 5. Remove the guest
         guests = guests.filter(g => g.id !== id);
         return { data: undefined };
       },
-      invalidatesTags: ['Guest'],
+      invalidatesTags: ['Guest', 'Booking', 'Room', 'Dashboard'],
     }),
   }),
 });
