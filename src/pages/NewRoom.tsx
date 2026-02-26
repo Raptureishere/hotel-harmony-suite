@@ -22,6 +22,8 @@ import { Badge } from '@/components/ui/badge';
 import { useCreateRoomMutation } from '@/features/rooms/roomsApi';
 import { RoomFormData, RoomType, RoomStatus } from '@/types/room';
 import { useToast } from '@/hooks/use-toast';
+import { useAppSelector } from '@/hooks/useAppStore';
+import { Shield } from 'lucide-react';
 
 const ROOM_TYPES: { value: RoomType; label: string }[] = [
     { value: 'standard', label: 'Standard' },
@@ -40,6 +42,19 @@ const NewRoom = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const [createRoom, { isLoading }] = useCreateRoomMutation();
+    const { user } = useAppSelector(state => state.auth);
+
+    // Block receptionist from accessing this page directly
+    if (user?.role === 'receptionist') {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[400px] text-center gap-4">
+                <Shield className="h-16 w-16 text-muted-foreground/50" />
+                <h2 className="text-xl font-semibold">Access Denied</h2>
+                <p className="text-muted-foreground">Only managers and administrators can add rooms.</p>
+                <Button variant="outline" onClick={() => navigate('/rooms')}>Back to Rooms</Button>
+            </div>
+        );
+    }
 
     const [form, setForm] = useState<RoomFormData>({
         roomNumber: '',

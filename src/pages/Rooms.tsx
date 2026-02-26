@@ -49,6 +49,7 @@ import { useGetRoomsQuery, useUpdateRoomStatusMutation, useDeleteRoomMutation } 
 import { formatCurrency, getRoomTypeLabel, getRoomStatusLabel } from '@/utils/helpers';
 import { RoomStatus, RoomType, Room } from '@/types/room';
 import { useToast } from '@/hooks/use-toast';
+import { useAppSelector } from '@/hooks/useAppStore';
 
 const Rooms = () => {
   const [search, setSearch] = useState('');
@@ -56,7 +57,7 @@ const Rooms = () => {
   const [typeFilter, setTypeFilter] = useState<RoomType | 'all'>('all');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  
+
   const { data: rooms = [], isLoading } = useGetRoomsQuery({
     status: statusFilter !== 'all' ? statusFilter : undefined,
     type: typeFilter !== 'all' ? typeFilter : undefined,
@@ -65,6 +66,8 @@ const Rooms = () => {
   const [updateStatus] = useUpdateRoomStatusMutation();
   const [deleteRoom] = useDeleteRoomMutation();
   const { toast } = useToast();
+  const { user } = useAppSelector(state => state.auth);
+  const canManageRooms = user?.role === 'admin' || user?.role === 'manager';
 
   const handleStatusChange = async (roomId: string, newStatus: RoomStatus) => {
     try {
@@ -131,12 +134,14 @@ const Rooms = () => {
             Manage your hotel rooms and their availability
           </p>
         </div>
-        <Button variant="gold" asChild>
-          <Link to="/rooms/new">
-            <Plus className="h-4 w-4 mr-2" />
-            Add Room
-          </Link>
-        </Button>
+        {canManageRooms && (
+          <Button variant="gold" asChild>
+            <Link to="/rooms/new">
+              <Plus className="h-4 w-4 mr-2" />
+              Add Room
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Status Summary Cards */}
@@ -323,23 +328,27 @@ const Rooms = () => {
                                 View Details
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link to={`/rooms/${room.id}/edit`}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => {
-                                setSelectedRoom(room);
-                                setDeleteDialogOpen(true);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
+                            {canManageRooms && (
+                              <>
+                                <DropdownMenuItem asChild>
+                                  <Link to={`/rooms/${room.id}/edit`}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit
+                                  </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() => {
+                                    setSelectedRoom(room);
+                                    setDeleteDialogOpen(true);
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
