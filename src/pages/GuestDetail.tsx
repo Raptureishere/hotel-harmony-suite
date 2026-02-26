@@ -257,7 +257,10 @@ const GuestDetail = () => {
                     </Card>
 
                     <Button variant="gold" className="w-full" asChild>
-                        <Link to="/bookings/new">New Booking for This Guest</Link>
+                        <Link to={`/bookings/new?guestId=${guest.id}`}>
+                            <Calendar className="h-4 w-4 mr-2" />
+                            New Booking for This Guest
+                        </Link>
                     </Button>
                 </div>
             </div>

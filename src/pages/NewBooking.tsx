@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, Calendar, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +25,8 @@ const NewBooking = () => {
     const navigate = useNavigate();
     const { toast } = useToast();
     const [createBooking, { isLoading }] = useCreateBookingMutation();
+    const [searchParams] = useSearchParams();
+    const prefilledGuestId = searchParams.get('guestId') || '';
 
     const { data: rooms = [] } = useGetRoomsQuery({ status: 'available' });
     const { data: guests = [] } = useGetGuestsQuery();
@@ -33,7 +35,7 @@ const NewBooking = () => {
     const tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
     const [form, setForm] = useState<BookingFormData>({
-        guestId: '',
+        guestId: prefilledGuestId,
         roomId: '',
         checkInDate: today,
         checkOutDate: tomorrow,

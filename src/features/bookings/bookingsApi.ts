@@ -95,7 +95,7 @@ export const bookingsApi = api.injectEndpoints({
         await simulateApiDelay(200);
         const today = new Date().toISOString().split('T')[0];
         const todayCheckIns = bookings
-          .filter(b => b.checkInDate === today && b.status === 'reserved')
+          .filter(b => b.checkInDate === today && b.status !== 'cancelled')
           .map(booking => ({
             ...booking,
             guest: getGuestsData().find(g => g.id === booking.guestId),
@@ -221,7 +221,7 @@ export const bookingsApi = api.injectEndpoints({
 
         return { data: bookings[index] };
       },
-      invalidatesTags: (_result, _error, { id }) => [{ type: 'Booking', id }, 'Room', 'Dashboard'],
+      invalidatesTags: (_result, _error, { id }) => [{ type: 'Booking', id }, 'Booking', 'Room', 'Dashboard'],
     }),
 
 

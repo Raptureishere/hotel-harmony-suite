@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -55,6 +55,7 @@ const Guests = () => {
   const { data: guests = [], isLoading } = useGetGuestsQuery({ search: search || undefined });
   const [deleteGuest] = useDeleteGuestMutation();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { user } = useAppSelector(state => state.auth);
   const canDelete = user?.role === 'admin' || user?.role === 'manager';
 
@@ -187,7 +188,11 @@ const Guests = () => {
                 </TableHeader>
                 <TableBody>
                   {guests.map((guest) => (
-                    <TableRow key={guest.id}>
+                    <TableRow
+                      key={guest.id}
+                      className="cursor-pointer hover:bg-white/5 transition-colors"
+                      onClick={() => navigate(`/guests/${guest.id}`)}
+                    >
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar>
@@ -231,42 +236,44 @@ const Guests = () => {
                         <Badge variant="success">Active</Badge>
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/guests/${guest.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Profile
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link to={`/guests/${guest.id}/edit`}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </Link>
-                            </DropdownMenuItem>
-                            {canDelete && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => {
-                                    setSelectedGuest(guest);
-                                    setDeleteDialogOpen(true);
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Guest
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                        <div onClick={e => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon-sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link to={`/guests/${guest.id}`}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Profile
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link to={`/guests/${guest.id}/edit`}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              {canDelete && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => {
+                                      setSelectedGuest(guest);
+                                      setDeleteDialogOpen(true);
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Guest
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

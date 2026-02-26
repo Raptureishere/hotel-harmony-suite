@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -47,7 +47,7 @@ import { useToast } from '@/hooks/use-toast';
 const Bookings = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<BookingStatus | 'all'>('all');
-  
+
   const { data: bookings = [], isLoading } = useGetBookingsQuery({
     status: statusFilter !== 'all' ? statusFilter : undefined,
     search: search || undefined,
@@ -55,6 +55,7 @@ const Bookings = () => {
   const [updateStatus] = useUpdateBookingStatusMutation();
   const [cancelBooking] = useCancelBookingMutation();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleCheckIn = async (bookingId: string) => {
     try {
@@ -268,7 +269,11 @@ const Bookings = () => {
                 </TableHeader>
                 <TableBody>
                   {bookings.map((booking) => (
-                    <TableRow key={booking.id}>
+                    <TableRow
+                      key={booking.id}
+                      className="cursor-pointer hover:bg-white/5 transition-colors"
+                      onClick={() => navigate(`/bookings/${booking.id}`)}
+                    >
                       <TableCell>
                         <div>
                           <p className="font-medium">
@@ -303,45 +308,47 @@ const Bookings = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                              <Link to={`/bookings/${booking.id}`}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </Link>
-                            </DropdownMenuItem>
-                            {booking.status === 'reserved' && (
-                              <DropdownMenuItem onClick={() => handleCheckIn(booking.id)}>
-                                <LogIn className="h-4 w-4 mr-2" />
-                                Check In
+                        <div onClick={e => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon-sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem asChild>
+                                <Link to={`/bookings/${booking.id}`}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </Link>
                               </DropdownMenuItem>
-                            )}
-                            {booking.status === 'checked-in' && (
-                              <DropdownMenuItem onClick={() => handleCheckOut(booking.id)}>
-                                <LogOut className="h-4 w-4 mr-2" />
-                                Check Out
-                              </DropdownMenuItem>
-                            )}
-                            {(booking.status === 'reserved' || booking.status === 'checked-in') && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() => handleCancel(booking.id)}
-                                >
-                                  <XCircle className="h-4 w-4 mr-2" />
-                                  Cancel Booking
+                              {booking.status === 'reserved' && (
+                                <DropdownMenuItem onClick={() => handleCheckIn(booking.id)}>
+                                  <LogIn className="h-4 w-4 mr-2" />
+                                  Check In
                                 </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                              )}
+                              {booking.status === 'checked-in' && (
+                                <DropdownMenuItem onClick={() => handleCheckOut(booking.id)}>
+                                  <LogOut className="h-4 w-4 mr-2" />
+                                  Check Out
+                                </DropdownMenuItem>
+                              )}
+                              {(booking.status === 'reserved' || booking.status === 'checked-in') && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-destructive"
+                                    onClick={() => handleCancel(booking.id)}
+                                  >
+                                    <XCircle className="h-4 w-4 mr-2" />
+                                    Cancel Booking
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

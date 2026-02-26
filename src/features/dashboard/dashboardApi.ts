@@ -21,7 +21,7 @@ export const dashboardApi = api.injectEndpoints({
         const roomsInMaintenance = rooms.filter(r => r.status === 'maintenance').length;
 
         const todayCheckIns = bookings.filter(
-          b => b.checkInDate === today && b.status === 'reserved'
+          b => b.checkInDate === today && b.status !== 'cancelled'
         ).length;
 
         const todayCheckOuts = bookings.filter(
