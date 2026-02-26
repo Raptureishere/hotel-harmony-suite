@@ -18,9 +18,17 @@ const MainLayout = () => {
   }, [darkMode]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-background">
+    <div className="flex h-screen w-full overflow-hidden relative">
+      {/* Decorative background orbs */}
+      <div className="bg-orb w-[600px] h-[600px] top-[-200px] left-[-100px] opacity-20"
+        style={{ background: 'radial-gradient(circle, hsl(38,92%,50%) 0%, transparent 70%)' }} />
+      <div className="bg-orb w-[500px] h-[500px] bottom-[-150px] right-[10%] opacity-15"
+        style={{ background: 'radial-gradient(circle, hsl(217,91%,60%) 0%, transparent 70%)' }} />
+      <div className="bg-orb w-[400px] h-[400px] top-[40%] right-[30%] opacity-10"
+        style={{ background: 'radial-gradient(circle, hsl(152,69%,42%) 0%, transparent 70%)' }} />
+
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block">
+      <div className="hidden lg:block relative z-10">
         <Sidebar />
       </div>
 
@@ -28,7 +36,7 @@ const MainLayout = () => {
       <MobileSidebar />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative z-10">
         <Header />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           <Outlet />

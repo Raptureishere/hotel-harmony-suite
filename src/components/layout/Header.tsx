@@ -42,7 +42,7 @@ const Header = () => {
   };
 
   return (
-    <header className="h-16 border-b bg-card flex items-center justify-between px-4 lg:px-6">
+    <header className="h-16 glass-header flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20">
       {/* Mobile menu button */}
       <Button
         variant="ghost"

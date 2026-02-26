@@ -66,11 +66,11 @@ const Sidebar = () => {
         className={cn(
           'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
           active
-            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
+            ? 'nav-active-glow text-white'
+            : 'text-sidebar-foreground hover:bg-white/5 hover:text-white'
         )}
       >
-        <Icon className={cn('h-5 w-5 flex-shrink-0', active && 'text-sidebar-primary')} />
+        <Icon className={cn('h-5 w-5 flex-shrink-0', active && 'text-accent')} />
         {!sidebarCollapsed && <span>{item.name}</span>}
       </Link>
     );
@@ -90,25 +90,25 @@ const Sidebar = () => {
   return (
     <aside
       className={cn(
-        'flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300',
+        'flex flex-col glass-sidebar transition-all duration-300',
         sidebarCollapsed ? 'w-[72px]' : 'w-64'
       )}
     >
       {/* Logo */}
-      <div className="flex h-16 items-center justify-between px-4 border-b border-sidebar-border">
+      <div className="flex h-16 items-center justify-between px-4 border-b border-white/5">
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="p-1.5 rounded-lg bg-sidebar-primary">
-            <Hotel className="h-5 w-5 text-sidebar-primary-foreground" />
+          <div className="p-1.5 rounded-lg" style={{ background: 'linear-gradient(135deg,hsl(38,92%,50%),hsl(32,95%,40%))' }}>
+            <Hotel className="h-5 w-5 text-white" />
           </div>
           {!sidebarCollapsed && (
-            <span className="font-bold text-sidebar-foreground">Grand Hotel</span>
+            <span className="font-bold text-white tracking-wide">Grand Hotel</span>
           )}
         </Link>
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={() => dispatch(toggleSidebar())}
-          className="text-sidebar-foreground hover:bg-sidebar-accent"
+          className="text-sidebar-foreground hover:bg-white/5"
         >
           <ChevronLeft
             className={cn(
@@ -145,7 +145,7 @@ const Sidebar = () => {
       </nav>
 
       {/* Bottom section */}
-      <div className="p-3 border-t border-sidebar-border space-y-2">
+      <div className="p-3 border-t border-white/5 space-y-2">
         {/* Dark mode toggle */}
         <Button
           variant="ghost"
