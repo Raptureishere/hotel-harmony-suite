@@ -26,12 +26,12 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
-import { toggleDarkMode } from '@/features/ui/uiSlice';
+import { toggleDarkMode, setColorTheme, type ColorTheme } from '@/features/ui/uiSlice';
 import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const dispatch = useAppDispatch();
-  const { darkMode } = useAppSelector((state) => state.ui);
+  const { darkMode, colorTheme } = useAppSelector((state) => state.ui);
   const { toast } = useToast();
 
   const [hotelName, setHotelName] = useState('Grand Hotel');
@@ -452,26 +452,29 @@ const Settings = () => {
               <div className="space-y-3">
                 <Label>Color Theme</Label>
                 <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                  {[
-                    { name: 'Gold', color: 'hsl(38, 92%, 50%)', active: true },
-                    { name: 'Blue', color: 'hsl(217, 91%, 60%)', active: false },
-                    { name: 'Green', color: 'hsl(152, 69%, 40%)', active: false },
-                    { name: 'Purple', color: 'hsl(262, 83%, 58%)', active: false },
-                    { name: 'Rose', color: 'hsl(346, 77%, 49%)', active: false },
-                  ].map((theme) => (
+                  {([
+                    { id: 'gold', name: 'Gold', color: 'hsl(38, 92%, 50%)' },
+                    { id: 'blue', name: 'Blue', color: 'hsl(217, 91%, 60%)' },
+                    { id: 'green', name: 'Green', color: 'hsl(152, 69%, 42%)' },
+                    { id: 'purple', name: 'Purple', color: 'hsl(262, 83%, 58%)' },
+                    { id: 'rose', name: 'Rose', color: 'hsl(346, 77%, 55%)' },
+                  ] as { id: ColorTheme; name: string; color: string }[]).map((theme) => (
                     <button
-                      key={theme.name}
-                      className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${
-                        theme.active
-                          ? 'border-accent bg-accent/5'
-                          : 'border-transparent hover:border-border'
-                      }`}
+                      key={theme.id}
+                      onClick={() => {
+                        dispatch(setColorTheme(theme.id));
+                        toast({ title: `Theme changed to ${theme.name}`, description: 'Your colour theme has been applied.' });
+                      }}
+                      className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${colorTheme === theme.id
+                          ? 'border-accent bg-accent/10 scale-105'
+                          : 'border-transparent hover:border-border hover:scale-105'
+                        }`}
                     >
                       <div
-                        className="w-8 h-8 rounded-full relative flex items-center justify-center"
+                        className="w-8 h-8 rounded-full relative flex items-center justify-center shadow-md"
                         style={{ backgroundColor: theme.color }}
                       >
-                        {theme.active && (
+                        {colorTheme === theme.id && (
                           <Check className="h-4 w-4 text-white" />
                         )}
                       </div>
@@ -480,7 +483,7 @@ const Settings = () => {
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Theme switching is a preview feature — Gold is the current active theme.
+                  Click a theme to apply it instantly across the entire interface.
                 </p>
               </div>
               <div className="flex justify-end">

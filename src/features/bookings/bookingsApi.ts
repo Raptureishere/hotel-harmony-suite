@@ -5,7 +5,7 @@ import type {
   BookingFilters,
   BookingStatus
 } from '@/types/booking';
-import { mockBookings } from '@/utils/mockData';
+import { mockBookings, mockPayments } from '@/utils/mockData';
 import { simulateApiDelay, calculateNights } from '@/utils/helpers';
 import { getRoomsData, updateRoomInPlace } from '@/features/rooms/roomsApi';
 import { getGuestsData } from '@/features/guests/guestsApi';
@@ -14,8 +14,8 @@ import type { Payment } from '@/types/payment';
 // In-memory store
 let bookings = [...mockBookings];
 
-// In-memory payments store — entries are created on check-in
-let payments: Payment[] = [];
+// In-memory payments store — seeded from mockPayments, then grows on check-ins
+let payments: Payment[] = [...mockPayments];
 
 // Getters for dashboardApi / Payments page
 export const getBookingsData = () => bookings;

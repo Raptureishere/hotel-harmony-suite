@@ -4,18 +4,21 @@ import Header from './Header';
 import MobileSidebar from './MobileSidebar';
 import { useAppSelector } from '@/hooks/useAppStore';
 import { useEffect } from 'react';
+import { applyColorTheme } from '@/features/ui/uiSlice';
 
 const MainLayout = () => {
-  const { darkMode } = useAppSelector((state) => state.ui);
+  const { darkMode, colorTheme } = useAppSelector((state) => state.ui);
 
   // Apply dark mode on mount and when it changes
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
   }, [darkMode]);
+
+  // Apply colour theme on mount and when it changes
+  useEffect(() => {
+    applyColorTheme(colorTheme);
+  }, [colorTheme]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden relative">
