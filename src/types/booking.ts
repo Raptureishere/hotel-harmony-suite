@@ -16,6 +16,16 @@ export interface Booking {
   specialRequests?: string;
   createdAt: string;
   updatedAt: string;
+  // Audit trail
+  checkedInBy?: string;       // user id
+  checkedInByName?: string;   // display name
+  checkedInAt?: string;       // ISO timestamp
+  checkedOutBy?: string;
+  checkedOutByName?: string;
+  checkedOutAt?: string;
+  cancelledBy?: string;
+  cancelledByName?: string;
+  cancelledAt?: string;
   // Populated fields
   guest?: Guest;
   room?: Room;

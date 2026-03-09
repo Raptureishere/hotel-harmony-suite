@@ -168,8 +168,8 @@ export const bookingsApi = api.injectEndpoints({
       invalidatesTags: (_result, _error, { id }) => [{ type: 'Booking', id }, 'Dashboard'],
     }),
 
-    updateBookingStatus: builder.mutation<Booking, { id: string; status: BookingStatus }>({
-      queryFn: async ({ id, status }) => {
+    updateBookingStatus: builder.mutation<Booking, { id: string; status: BookingStatus; performedByUserId?: string; performedByName?: string }>({
+      queryFn: async ({ id, status, performedByUserId, performedByName }) => {
         await simulateApiDelay(300);
         const index = bookings.findIndex(b => b.id === id);
         if (index === -1) {
@@ -177,6 +177,7 @@ export const bookingsApi = api.injectEndpoints({
         }
 
         const booking = bookings[index];
+        const now = new Date().toISOString();
 
         if (status === 'checked-in') {
           // Mark room as occupied
@@ -187,7 +188,10 @@ export const bookingsApi = api.injectEndpoints({
             status,
             paymentStatus: 'paid',
             paidAmount: booking.totalAmount,
-            updatedAt: new Date().toISOString(),
+            updatedAt: now,
+            checkedInBy: performedByUserId,
+            checkedInByName: performedByName,
+            checkedInAt: now,
           };
           // Record a payment entry for the Payments page
           const payment: Payment = {
@@ -199,8 +203,8 @@ export const bookingsApi = api.injectEndpoints({
             type: 'booking',
             status: 'completed',
             transactionId: `TXN-${Date.now()}`,
-            createdAt: new Date().toISOString(),
-            processedAt: new Date().toISOString(),
+            createdAt: now,
+            processedAt: now,
           };
           payments.push(payment);
         } else if (status === 'checked-out') {
@@ -209,13 +213,16 @@ export const bookingsApi = api.injectEndpoints({
           bookings[index] = {
             ...booking,
             status,
-            updatedAt: new Date().toISOString(),
+            updatedAt: now,
+            checkedOutBy: performedByUserId,
+            checkedOutByName: performedByName,
+            checkedOutAt: now,
           };
         } else {
           bookings[index] = {
             ...booking,
             status,
-            updatedAt: new Date().toISOString(),
+            updatedAt: now,
           };
         }
 
@@ -225,20 +232,24 @@ export const bookingsApi = api.injectEndpoints({
     }),
 
 
-    cancelBooking: builder.mutation<Booking, string>({
-      queryFn: async (id) => {
+    cancelBooking: builder.mutation<Booking, { id: string; performedByUserId?: string; performedByName?: string }>({
+      queryFn: async ({ id, performedByUserId, performedByName }) => {
         await simulateApiDelay(500);
         const index = bookings.findIndex(b => b.id === id);
         if (index === -1) {
           return { error: { status: 404, data: 'Booking not found' } };
         }
+        const now = new Date().toISOString();
         // Free the room back to available
         updateRoomInPlace(bookings[index].roomId, { status: 'available', currentBookingId: undefined });
         bookings[index] = {
           ...bookings[index],
           status: 'cancelled',
           paymentStatus: 'pending',
-          updatedAt: new Date().toISOString(),
+          updatedAt: now,
+          cancelledBy: performedByUserId,
+          cancelledByName: performedByName,
+          cancelledAt: now,
         };
         return { data: bookings[index] };
       },

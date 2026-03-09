@@ -6,7 +6,10 @@ import {
     BedDouble,
     DollarSign,
     MessageSquare,
-    Edit,
+    ClipboardList,
+    LogIn,
+    LogOut,
+    XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -28,9 +31,10 @@ import {
     useUpdateBookingStatusMutation,
     useCancelBookingMutation,
 } from '@/features/bookings/bookingsApi';
-import { formatCurrency, formatDate, getBookingStatusLabel } from '@/utils/helpers';
+import { formatCurrency, formatDate, formatDateTime, getBookingStatusLabel } from '@/utils/helpers';
 import { BookingStatus } from '@/types/booking';
 import { useToast } from '@/hooks/use-toast';
+import { useAppSelector } from '@/hooks/useAppStore';
 
 const BookingDetail = () => {
     const { id } = useParams<{ id: string }>();
@@ -40,11 +44,13 @@ const BookingDetail = () => {
     const { data: booking, isLoading, isError } = useGetBookingByIdQuery(id!);
     const [updateStatus] = useUpdateBookingStatusMutation();
     const [cancelBooking, { isLoading: isCancelling }] = useCancelBookingMutation();
+    const { user } = useAppSelector(state => state.auth);
+    const performedBy = { performedByUserId: user?.id, performedByName: user?.name };
 
     const handleCheckIn = async () => {
         if (!booking) return;
         try {
-            await updateStatus({ id: booking.id, status: 'checked-in' }).unwrap();
+            await updateStatus({ id: booking.id, status: 'checked-in', ...performedBy }).unwrap();
             toast({ title: 'Checked in', description: `Guest ${booking.guest?.firstName} has been checked in.` });
         } catch {
             toast({ title: 'Error', description: 'Check-in failed.', variant: 'destructive' });
@@ -54,7 +60,7 @@ const BookingDetail = () => {
     const handleCheckOut = async () => {
         if (!booking) return;
         try {
-            await updateStatus({ id: booking.id, status: 'checked-out' }).unwrap();
+            await updateStatus({ id: booking.id, status: 'checked-out', ...performedBy }).unwrap();
             toast({ title: 'Checked out', description: `Guest checked out of Room ${booking.room?.roomNumber}.` });
         } catch {
             toast({ title: 'Error', description: 'Check-out failed.', variant: 'destructive' });
@@ -64,7 +70,7 @@ const BookingDetail = () => {
     const handleCancel = async () => {
         if (!booking) return;
         try {
-            await cancelBooking(booking.id).unwrap();
+            await cancelBooking({ id: booking.id, ...performedBy }).unwrap();
             toast({ title: 'Booking cancelled', description: 'The reservation has been cancelled.' });
         } catch {
             toast({ title: 'Error', description: 'Cancellation failed.', variant: 'destructive' });
@@ -297,6 +303,56 @@ const BookingDetail = () => {
                             <span>{formatDate(booking.updatedAt)}</span>
                         </div>
                     </div>
+
+                    {/* Audit Trail */}
+                    {(booking.checkedInByName || booking.checkedOutByName || booking.cancelledByName) && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-sm">
+                                    <ClipboardList className="h-4 w-4 text-accent" />
+                                    Audit Trail
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                {booking.checkedInByName && (
+                                    <div className="flex items-start gap-2 text-xs">
+                                        <LogIn className="h-3.5 w-3.5 text-status-available mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <p className="font-medium text-foreground">Checked in by</p>
+                                            <p className="text-muted-foreground">{booking.checkedInByName}</p>
+                                            {booking.checkedInAt && (
+                                                <p className="text-muted-foreground">{formatDateTime(booking.checkedInAt)}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {booking.checkedOutByName && (
+                                    <div className="flex items-start gap-2 text-xs">
+                                        <LogOut className="h-3.5 w-3.5 text-status-cleaning mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <p className="font-medium text-foreground">Checked out by</p>
+                                            <p className="text-muted-foreground">{booking.checkedOutByName}</p>
+                                            {booking.checkedOutAt && (
+                                                <p className="text-muted-foreground">{formatDateTime(booking.checkedOutAt)}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {booking.cancelledByName && (
+                                    <div className="flex items-start gap-2 text-xs">
+                                        <XCircle className="h-3.5 w-3.5 text-destructive mt-0.5 flex-shrink-0" />
+                                        <div>
+                                            <p className="font-medium text-foreground">Cancelled by</p>
+                                            <p className="text-muted-foreground">{booking.cancelledByName}</p>
+                                            {booking.cancelledAt && (
+                                                <p className="text-muted-foreground">{formatDateTime(booking.cancelledAt)}</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
         </div>
