@@ -33,8 +33,8 @@ const EditBooking = () => {
     const { data: booking, isLoading: bookingLoading } = useGetBookingByIdQuery(id!);
     const [updateBooking, { isLoading: isSaving }] = useUpdateBookingMutation();
 
-    // Load all rooms (not just available) so the current room shows in dropdown
-    const { data: allRooms = [] } = useGetRoomsQuery({});
+    // Load all rooms (no status filter) so the current occupied/cleaning room still shows
+    const { data: allRooms = [] } = useGetRoomsQuery(undefined);
     const { data: guests = [] } = useGetGuestsQuery();
 
     const [form, setForm] = useState<BookingFormData>({

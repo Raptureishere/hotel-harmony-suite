@@ -220,7 +220,7 @@ const GuestDetail = () => {
                                 </div>
                                 <div>
                                     <p className="text-xs text-muted-foreground">Total Bookings</p>
-                                    <p className="font-semibold">{pluralize(guest.totalBookings, 'booking')}</p>
+                                    <p className="font-semibold">{guest.totalBookings} {guest.totalBookings === 1 ? 'booking' : 'bookings'}</p>
                                 </div>
                             </div>
                             <Separator />
