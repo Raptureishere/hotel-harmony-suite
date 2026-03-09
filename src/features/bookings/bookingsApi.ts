@@ -8,7 +8,7 @@ import type {
 import { mockBookings, mockPayments } from '@/utils/mockData';
 import { simulateApiDelay, calculateNights } from '@/utils/helpers';
 import { getRoomsData, updateRoomInPlace } from '@/features/rooms/roomsApi';
-import { getGuestsData } from '@/features/guests/guestsApi';
+import { getGuestsData, updateGuestTotals } from '@/features/guests/guestsApi';
 import type { Payment } from '@/types/payment';
 import { pushNotification } from '@/features/notifications/notificationsApi';
 
@@ -148,6 +148,9 @@ export const bookingsApi = api.injectEndpoints({
 
         bookings.push(newBooking);
 
+        // Update guest totals: +1 booking
+        updateGuestTotals(data.guestId, { bookings: 1 });
+
         // Notify
         const guest = getGuestsData().find(g => g.id === data.guestId);
         const guestName = guest ? `${guest.firstName} ${guest.lastName}` : 'Guest';
@@ -225,6 +228,8 @@ export const bookingsApi = api.injectEndpoints({
             processedAt: now,
           };
           payments.push(payment);
+          // Update guest totals: +spend
+          updateGuestTotals(booking.guestId, { spent: booking.totalAmount });
           pushNotification({
             type: 'success',
             category: 'booking',

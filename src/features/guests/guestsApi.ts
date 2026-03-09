@@ -10,6 +10,21 @@ let guests = [...mockGuests];
 // Getter for other modules to read live guest data
 export const getGuestsData = () => guests;
 
+/** Called by bookingsApi to keep guest aggregate stats in sync */
+export const updateGuestTotals = (
+  guestId: string,
+  delta: { bookings?: number; spent?: number }
+) => {
+  const idx = guests.findIndex(g => g.id === guestId);
+  if (idx === -1) return;
+  guests[idx] = {
+    ...guests[idx],
+    totalBookings: guests[idx].totalBookings + (delta.bookings ?? 0),
+    totalSpent: guests[idx].totalSpent + (delta.spent ?? 0),
+    updatedAt: new Date().toISOString(),
+  };
+};
+
 export const guestsApi = api.injectEndpoints({
   endpoints: (builder) => ({
     getGuests: builder.query<Guest[], GuestFilters | void>({

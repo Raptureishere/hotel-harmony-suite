@@ -14,6 +14,7 @@ import EditRoom from "./pages/EditRoom";
 import Bookings from "./pages/Bookings";
 import NewBooking from "./pages/NewBooking";
 import BookingDetail from "./pages/BookingDetail";
+import EditBooking from "./pages/EditBooking";
 import Guests from "./pages/Guests";
 import NewGuest from "./pages/NewGuest";
 import GuestDetail from "./pages/GuestDetail";
@@ -65,6 +66,7 @@ const App = () => {
             <Route path="/bookings" element={<Bookings />} />
             <Route path="/bookings/new" element={<NewBooking />} />
             <Route path="/bookings/:id" element={<BookingDetail />} />
+            <Route path="/bookings/:id/edit" element={<EditBooking />} />
 
             {/* Guests */}
             <Route path="/guests" element={<Guests />} />

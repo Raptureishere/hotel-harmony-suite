@@ -26,22 +26,22 @@ import {
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import { useAppDispatch, useAppSelector } from '@/hooks/useAppStore';
-import { toggleDarkMode, setColorTheme, type ColorTheme } from '@/features/ui/uiSlice';
+import { toggleDarkMode, setColorTheme, setHotelSettings, type ColorTheme } from '@/features/ui/uiSlice';
 import { useToast } from '@/hooks/use-toast';
 
 const Settings = () => {
   const dispatch = useAppDispatch();
-  const { darkMode, colorTheme } = useAppSelector((state) => state.ui);
+  const { darkMode, colorTheme, hotelSettings } = useAppSelector((state) => state.ui);
   const { toast } = useToast();
 
-  const [hotelName, setHotelName] = useState('Grand Hotel');
-  const [hotelEmail, setHotelEmail] = useState('info@grandhotel.com');
-  const [hotelPhone, setHotelPhone] = useState('+1 (555) 000-0000');
-  const [hotelAddress, setHotelAddress] = useState('123 Grand Avenue, New York, NY 10001');
-  const [currency, setCurrency] = useState('USD');
-  const [timezone, setTimezone] = useState('America/New_York');
-  const [checkInTime, setCheckInTime] = useState('15:00');
-  const [checkOutTime, setCheckOutTime] = useState('11:00');
+  const [hotelName, setHotelName] = useState(hotelSettings.hotelName);
+  const [hotelEmail, setHotelEmail] = useState(hotelSettings.hotelEmail);
+  const [hotelPhone, setHotelPhone] = useState(hotelSettings.hotelPhone);
+  const [hotelAddress, setHotelAddress] = useState(hotelSettings.hotelAddress);
+  const [currency, setCurrency] = useState(hotelSettings.currency);
+  const [timezone, setTimezone] = useState(hotelSettings.timezone);
+  const [checkInTime, setCheckInTime] = useState(hotelSettings.checkInTime);
+  const [checkOutTime, setCheckOutTime] = useState(hotelSettings.checkOutTime);
 
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [bookingAlerts, setBookingAlerts] = useState(true);
@@ -49,11 +49,13 @@ const Settings = () => {
   const [maintenanceAlerts, setMaintenanceAlerts] = useState(false);
   const [occupancyReports, setOccupancyReports] = useState(true);
 
-  const [taxRate, setTaxRate] = useState('10');
+  const [taxRate, setTaxRate] = useState(hotelSettings.taxRate);
   const [lateFee, setLateFee] = useState('50');
-  const [cancellationPolicy, setCancellationPolicy] = useState('24h');
+  const [cancellationPolicy, setCancellationPolicy] = useState(hotelSettings.cancellationPolicy);
 
   const handleSave = (section: string) => {
+    // Persist general + billing settings to Redux → localStorage
+    dispatch(setHotelSettings({ hotelName, hotelEmail, hotelPhone, hotelAddress, currency, timezone, checkInTime, checkOutTime, taxRate, cancellationPolicy }));
     toast({
       title: 'Settings saved',
       description: `${section} settings have been updated successfully.`,
@@ -466,8 +468,8 @@ const Settings = () => {
                         toast({ title: `Theme changed to ${theme.name}`, description: 'Your colour theme has been applied.' });
                       }}
                       className={`flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all ${colorTheme === theme.id
-                          ? 'border-accent bg-accent/10 scale-105'
-                          : 'border-transparent hover:border-border hover:scale-105'
+                        ? 'border-accent bg-accent/10 scale-105'
+                        : 'border-transparent hover:border-border hover:scale-105'
                         }`}
                     >
                       <div

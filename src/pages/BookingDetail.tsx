@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
     ArrowLeft,
     Calendar,
@@ -10,6 +10,7 @@ import {
     LogIn,
     LogOut,
     XCircle,
+    Edit,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -125,6 +126,12 @@ const BookingDetail = () => {
                 <div className="flex gap-2 flex-wrap">
                     {booking.status === 'reserved' && (
                         <>
+                            <Button variant="outline" asChild>
+                                <Link to={`/bookings/${booking.id}/edit`}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit
+                                </Link>
+                            </Button>
                             <Button variant="success" onClick={handleCheckIn}>Check In</Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>

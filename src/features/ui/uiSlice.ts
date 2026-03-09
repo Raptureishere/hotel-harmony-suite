@@ -2,12 +2,47 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export type ColorTheme = 'gold' | 'blue' | 'green' | 'purple' | 'rose';
 
+export interface HotelSettings {
+  hotelName: string;
+  hotelEmail: string;
+  hotelPhone: string;
+  hotelAddress: string;
+  currency: string;
+  timezone: string;
+  checkInTime: string;
+  checkOutTime: string;
+  taxRate: string;
+  cancellationPolicy: string;
+}
+
+const DEFAULT_HOTEL_SETTINGS: HotelSettings = {
+  hotelName: 'Grand Hotel',
+  hotelEmail: 'info@grandhotel.com',
+  hotelPhone: '+1 (555) 000-0000',
+  hotelAddress: '123 Grand Avenue, New York, NY 10001',
+  currency: 'USD',
+  timezone: 'America/New_York',
+  checkInTime: '15:00',
+  checkOutTime: '11:00',
+  taxRate: '10',
+  cancellationPolicy: '24h',
+};
+
+const getInitialHotelSettings = (): HotelSettings => {
+  try {
+    const stored = localStorage.getItem('hms_hotelSettings');
+    if (stored) return { ...DEFAULT_HOTEL_SETTINGS, ...JSON.parse(stored) };
+  } catch { /* ignore */ }
+  return DEFAULT_HOTEL_SETTINGS;
+};
+
 interface UiState {
   sidebarCollapsed: boolean;
   darkMode: boolean;
   colorTheme: ColorTheme;
   notificationsPanelOpen: boolean;
   mobileMenuOpen: boolean;
+  hotelSettings: HotelSettings;
 }
 
 const getInitialDarkMode = (): boolean => {
@@ -81,6 +116,7 @@ const initialState: UiState = {
   colorTheme: getInitialTheme(),
   notificationsPanelOpen: false,
   mobileMenuOpen: false,
+  hotelSettings: getInitialHotelSettings(),
 };
 
 const uiSlice = createSlice({
@@ -110,6 +146,10 @@ const uiSlice = createSlice({
     setNotificationsPanelOpen: (state, action: PayloadAction<boolean>) => { state.notificationsPanelOpen = action.payload; },
     toggleMobileMenu: (state) => { state.mobileMenuOpen = !state.mobileMenuOpen; },
     setMobileMenuOpen: (state, action: PayloadAction<boolean>) => { state.mobileMenuOpen = action.payload; },
+    setHotelSettings: (state, action: PayloadAction<Partial<HotelSettings>>) => {
+      state.hotelSettings = { ...state.hotelSettings, ...action.payload };
+      try { localStorage.setItem('hms_hotelSettings', JSON.stringify(state.hotelSettings)); } catch { /* ignore */ }
+    },
   },
 });
 
@@ -123,6 +163,7 @@ export const {
   setNotificationsPanelOpen,
   toggleMobileMenu,
   setMobileMenuOpen,
+  setHotelSettings,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;
