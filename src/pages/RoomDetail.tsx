@@ -234,7 +234,7 @@ const RoomDetail = () => {
                     )}
 
                     <Button variant="gold" className="w-full" asChild>
-                        <Link to="/bookings/new">Create Booking for This Room</Link>
+                        <Link to={`/bookings/new?roomId=${room.id}`}>Create Booking for This Room</Link>
                     </Button>
                 </div>
             </div>

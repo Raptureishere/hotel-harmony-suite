@@ -10,6 +10,7 @@ import { simulateApiDelay, calculateNights } from '@/utils/helpers';
 import { getRoomsData, updateRoomInPlace } from '@/features/rooms/roomsApi';
 import { getGuestsData } from '@/features/guests/guestsApi';
 import type { Payment } from '@/types/payment';
+import { pushNotification } from '@/features/notifications/notificationsApi';
 
 // In-memory store
 let bookings = [...mockBookings];
@@ -146,6 +147,18 @@ export const bookingsApi = api.injectEndpoints({
         };
 
         bookings.push(newBooking);
+
+        // Notify
+        const guest = getGuestsData().find(g => g.id === data.guestId);
+        const guestName = guest ? `${guest.firstName} ${guest.lastName}` : 'Guest';
+        pushNotification({
+          type: 'success',
+          category: 'booking',
+          title: 'New Reservation Created',
+          message: `${guestName} — Room ${room?.roomNumber ?? '?'} · ${data.checkInDate} → ${data.checkOutDate}`,
+          actionUrl: `/bookings/${newBooking.id}`,
+        });
+
         return { data: newBooking };
       },
       invalidatesTags: ['Booking', 'Room', 'Dashboard'],
@@ -179,6 +192,11 @@ export const bookingsApi = api.injectEndpoints({
         const booking = bookings[index];
         const now = new Date().toISOString();
 
+        const bookingGuest = getGuestsData().find(g => g.id === booking.guestId);
+        const bookingRoom = getRoomsData().find(r => r.id === booking.roomId);
+        const guestName = bookingGuest ? `${bookingGuest.firstName} ${bookingGuest.lastName}` : 'Guest';
+        const roomNum = bookingRoom?.roomNumber ?? '?';
+
         if (status === 'checked-in') {
           // Mark room as occupied
           updateRoomInPlace(booking.roomId, { status: 'occupied', currentBookingId: booking.id });
@@ -207,6 +225,13 @@ export const bookingsApi = api.injectEndpoints({
             processedAt: now,
           };
           payments.push(payment);
+          pushNotification({
+            type: 'success',
+            category: 'booking',
+            title: 'Guest Checked In',
+            message: `${guestName} checked into Room ${roomNum}${performedByName ? ` · by ${performedByName}` : ''}`,
+            actionUrl: `/bookings/${id}`,
+          });
         } else if (status === 'checked-out') {
           // Free the room for cleaning
           updateRoomInPlace(booking.roomId, { status: 'cleaning', currentBookingId: undefined });
@@ -218,6 +243,13 @@ export const bookingsApi = api.injectEndpoints({
             checkedOutByName: performedByName,
             checkedOutAt: now,
           };
+          pushNotification({
+            type: 'info',
+            category: 'booking',
+            title: 'Guest Checked Out',
+            message: `${guestName} checked out of Room ${roomNum}${performedByName ? ` · by ${performedByName}` : ''}. Room queued for cleaning.`,
+            actionUrl: `/bookings/${id}`,
+          });
         } else {
           bookings[index] = {
             ...booking,
@@ -240,10 +272,13 @@ export const bookingsApi = api.injectEndpoints({
           return { error: { status: 404, data: 'Booking not found' } };
         }
         const now = new Date().toISOString();
+        const cancelledBooking = bookings[index];
+        const cancelGuest = getGuestsData().find(g => g.id === cancelledBooking.guestId);
+        const cancelRoom = getRoomsData().find(r => r.id === cancelledBooking.roomId);
         // Free the room back to available
-        updateRoomInPlace(bookings[index].roomId, { status: 'available', currentBookingId: undefined });
+        updateRoomInPlace(cancelledBooking.roomId, { status: 'available', currentBookingId: undefined });
         bookings[index] = {
-          ...bookings[index],
+          ...cancelledBooking,
           status: 'cancelled',
           paymentStatus: 'pending',
           updatedAt: now,
@@ -251,6 +286,13 @@ export const bookingsApi = api.injectEndpoints({
           cancelledByName: performedByName,
           cancelledAt: now,
         };
+        pushNotification({
+          type: 'warning',
+          category: 'booking',
+          title: 'Booking Cancelled',
+          message: `Reservation for ${cancelGuest ? `${cancelGuest.firstName} ${cancelGuest.lastName}` : 'Guest'} (Room ${cancelRoom?.roomNumber ?? '?'}) was cancelled${performedByName ? ` by ${performedByName}` : ''}.`,
+          actionUrl: `/bookings/${id}`,
+        });
         return { data: bookings[index] };
       },
       invalidatesTags: ['Booking', 'Room', 'Dashboard'],

@@ -27,6 +27,7 @@ const NewBooking = () => {
     const [createBooking, { isLoading }] = useCreateBookingMutation();
     const [searchParams] = useSearchParams();
     const prefilledGuestId = searchParams.get('guestId') || '';
+    const prefilledRoomId = searchParams.get('roomId') || '';
 
     const { data: rooms = [] } = useGetRoomsQuery({ status: 'available' });
     const { data: guests = [] } = useGetGuestsQuery();
@@ -36,7 +37,7 @@ const NewBooking = () => {
 
     const [form, setForm] = useState<BookingFormData>({
         guestId: prefilledGuestId,
-        roomId: '',
+        roomId: prefilledRoomId,
         checkInDate: today,
         checkOutDate: tomorrow,
         numberOfGuests: 1,
